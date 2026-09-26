@@ -139,6 +139,35 @@ assert(sampleOnboardingProfile.weakSubjects.length >= 2, 'Student identified mul
 assert(sampleOnboardingProfile.targetDurationDays >= 7 && sampleOnboardingProfile.targetDurationDays <= 60, 'Target duration is within valid roadmap range (7-60 days)');
 assert(sampleOnboardingProfile.dailyStudyTimeMinutes >= 45, 'Daily study commitment meets minimum placement baseline');
 
+// TEST SUITE 8: AI Tutor Conversation & Gemini Integration
+console.log('\nSuite 8: AI Placement Tutor Multi-Turn & Gemini Reliability');
+import { sanitizeChatContents, formatGeminiError, PRIMARY_MODEL, SECONDARY_MODEL } from '../src/server/gemini';
+
+assert(PRIMARY_MODEL === 'gemini-3.1-flash-lite', 'Primary tutor model is official supported gemini-3.1-flash-lite');
+assert(SECONDARY_MODEL === 'gemini-3.8-flash', 'Secondary fallback model is official supported gemini-3.8-flash');
+
+const testRawChat = [
+  { role: 'tutor', content: 'Welcome to prep tutor!' },
+  { role: 'student', content: 'Hello' },
+  { role: 'student', content: 'What is quicksort?' },
+  { role: 'tutor', content: 'It is a divide and conquer algorithm.' },
+  { role: 'student', content: 'Can you show it in Python?' }
+];
+
+const sanitized = sanitizeChatContents(testRawChat);
+assert(sanitized.length === 3, 'Sanitized turns collapsed to 3 valid turns');
+assert(sanitized[0].role === 'user', 'Multi-turn chat starts with user role, skipping leading tutor greeting');
+assert(sanitized[0].parts[0].text.includes('Hello') && sanitized[0].parts[0].text.includes('What is quicksort?'), 'Adjacent user turns merged smoothly');
+assert(sanitized[sanitized.length - 1].role === 'user', 'Multi-turn contents ends with user prompt');
+
+// Error formatting test
+const rateLimitErr = formatGeminiError({ status: 429, message: 'RESOURCE_EXHAUSTED' });
+assert(rateLimitErr.code === 'RATE_LIMIT_EXCEEDED', 'Rate limit error classified correctly');
+assert(rateLimitErr.retryable === true, 'Rate limit error is marked retryable');
+
+const unavailableErr = formatGeminiError({ status: 503, message: 'UNAVAILABLE' });
+assert(unavailableErr.code === 'MODEL_UNAVAILABLE', 'Model 503 unavailable error classified correctly');
+
 console.log('\n=============================================');
 console.log(`  Tests Completed: ${passed + failed} | Passed: ${passed} | Failed: ${failed}`);
 console.log('=============================================\n');

@@ -1,5 +1,14 @@
 import { Router, Request, Response } from 'express';
-import { ai, DEFAULT_MODEL, parseGeminiJson } from './gemini';
+import {
+  ai,
+  DEFAULT_MODEL,
+  PRIMARY_MODEL,
+  SECONDARY_MODEL,
+  generateContentWithFallback,
+  sanitizeChatContents,
+  formatGeminiError,
+  parseGeminiJson
+} from './gemini';
 import { CURATED_QUESTIONS, CODING_PROBLEMS, COMPANY_TRACKS, CAREER_PROFILES } from './curatedData';
 import { Question, AssessmentResult, SkillProfile, Roadmap, RoadmapTask, ResumeAnalysisResult } from '../types';
 
@@ -337,51 +346,71 @@ apiRouter.post('/tutor/chat', async (req: Request, res: Response) => {
     const { messages, studentContext } = req.body;
 
     if (!Array.isArray(messages) || messages.length === 0) {
-      return res.status(400).json({ error: 'messages array is required' });
-    }
-
-    if (!process.env.GEMINI_API_KEY) {
-      return res.json({
-        reply: "I am your PrepPilot AI Tutor. For placement preparations, remember: always establish the time and space complexity of your approach before coding. Break down problems into base cases and sub-problems!",
-        timestamp: new Date().toISOString()
+      return res.status(400).json({
+        error: 'The messages array is required and must not be empty.',
+        code: 'INVALID_REQUEST',
+        retryable: false
       });
     }
 
-    const systemInstruction = `You are the PrepPilot AI Placement Preparation Tutor, an expert software engineering mentor and placement coach.
+    if (!process.env.GEMINI_API_KEY) {
+      return res.status(503).json({
+        error: 'Gemini API key is not configured on the server. Please add GEMINI_API_KEY in the AI Studio Secrets panel or environment.',
+        code: 'API_KEY_MISSING',
+        retryable: false
+      });
+    }
+
+    // Sanitize chat history for Gemini multi-turn requirements (must start with user, strictly alternate, and end with user)
+    const sanitizedTurns = sanitizeChatContents(messages);
+
+    if (sanitizedTurns.length === 0) {
+      return res.status(400).json({
+        error: 'Please provide a non-empty question to ask the AI Tutor.',
+        code: 'EMPTY_PROMPT',
+        retryable: false
+      });
+    }
+
+    const systemInstruction = `You are the PrepPilot AI Placement Preparation Tutor, an expert software engineering mentor and campus placement coach.
 Student Profile Context:
-- Target Career: ${studentContext?.targetCareer || 'Software Developer'}
-- Preferred Language: ${studentContext?.preferredLanguage || 'Python'}
-- Current Weak Areas: ${(studentContext?.weakSubjects || []).join(', ') || 'DSA & System Design'}
+- Target Placement Track: ${studentContext?.targetCareer || 'Software Developer'}
+- Preferred Programming Language: ${studentContext?.preferredLanguage || 'Python'}
+- Current Identified Weak Areas: ${(studentContext?.weakSubjects || []).join(', ') || 'DSA & System Design'}
+- Preparation Level: ${studentContext?.prepLevel || 'Intermediate'}
 
-Guidelines:
-1. Explain technical concepts clearly with intuitive analogies and concise code snippets.
-2. If the user presents a coding error, explain the root cause step-by-step and provide the clean fix.
-3. If they ask about interview preparation, reference the STAR method or algorithmic patterns.
-4. Keep explanations crisp, encouraging, and structured with bullet points.
-5. During active diagnostic assessments, provide guiding hints rather than direct answers.`;
+Pedagogical Directives:
+1. Explain technical, mathematical, and coding concepts clearly with step-by-step logic, intuitive analogies, and clean code snippets in ${studentContext?.preferredLanguage || 'Python'} where applicable.
+2. If asked to "explain simpler", break down the idea using real-world metaphors with zero jargon.
+3. If presented with a coding problem or bug, explain the root cause first, discuss time and space complexity tradeoffs, and provide the corrected code.
+4. For aptitude and quantitative queries, show shortcut formulas, standard tricks, and work through a quick step-by-step calculation.
+5. For campus interviews, guide the student through structured frameworks (e.g., STAR technique for behavioral, base-case-then-recursive for algorithmic).
+6. Provide concrete next learning steps or practice problem recommendations tailored to their target career and weak areas.
+7. Format your response cleanly using markdown (bold key concepts, use bullet points, and wrap code in appropriate markdown syntax blocks).`;
 
-    const contents = messages.map((m: any) => ({
-      role: m.role === 'student' || m.role === 'user' ? 'user' : 'model',
-      parts: [{ text: m.content }]
-    }));
-
-    const response = await ai.models.generateContent({
-      model: DEFAULT_MODEL,
-      contents,
-      config: {
-        systemInstruction,
-        temperature: 0.6
-      }
+    const result = await generateContentWithFallback({
+      contents: sanitizedTurns,
+      systemInstruction,
+      temperature: 0.6
     });
 
     res.json({
-      reply: response.text || 'I am ready to help you prepare. What topic would you like to review next?',
+      reply: result.text || 'I am ready to help you prepare. What topic would you like to review next?',
+      modelUsed: result.modelUsed,
       timestamp: new Date().toISOString()
     });
   } catch (error: any) {
-    console.error('Tutor error:', error);
-    res.status(500).json({
-      reply: 'An error occurred while connecting to the AI Tutor. Please try asking again shortly.'
+    const formatted = formatGeminiError(error);
+    console.error(`[AI Tutor Server Error] code: ${formatted.code}, message: ${formatted.message}`);
+
+    const statusCode = formatted.code === 'RATE_LIMIT_EXCEEDED' ? 429 :
+                       formatted.code === 'MODEL_UNAVAILABLE' || formatted.code === 'API_KEY_MISSING' ? 503 :
+                       formatted.code === 'INVALID_REQUEST' || formatted.code === 'EMPTY_PROMPT' ? 400 : 500;
+
+    res.status(statusCode).json({
+      error: formatted.message,
+      code: formatted.code,
+      retryable: formatted.retryable
     });
   }
 });
