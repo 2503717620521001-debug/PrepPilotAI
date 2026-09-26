@@ -1,0 +1,218 @@
+{
+  "entities": {
+    "User": {
+      "title": "User",
+      "description": "User profile with academic onboarding details and study progress",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string" },
+        "email": { "type": "string" },
+        "displayName": { "type": "string" },
+        "college": { "type": "string" },
+        "degree": { "type": "string" },
+        "branch": { "type": "string" },
+        "yearOfStudy": { "type": "string" },
+        "targetCareer": { "type": "string" },
+        "preferredLanguage": { "type": "string" },
+        "prepLevel": { "type": "string" },
+        "weakSubjects": { "type": "array" },
+        "dailyStudyTimeMinutes": { "type": "number" },
+        "targetDurationDays": { "type": "number" },
+        "isOnboarded": { "type": "boolean" },
+        "currentStreak": { "type": "number" },
+        "totalStudyMinutes": { "type": "number" },
+        "createdAt": { "type": "string" },
+        "updatedAt": { "type": "string" }
+      },
+      "required": ["uid", "email"]
+    },
+    "Assessment": {
+      "title": "Assessment",
+      "description": "Diagnostic and practice assessment results and responses",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "userId": { "type": "string" },
+        "category": { "type": "string" },
+        "title": { "type": "string" },
+        "level": { "type": "string" },
+        "score": { "type": "number" },
+        "totalQuestions": { "type": "number" },
+        "correctCount": { "type": "number" },
+        "timeSpentSeconds": { "type": "number" },
+        "isComparableDiagnostic": { "type": "boolean" },
+        "topicBreakdown": { "type": "object" },
+        "completedAt": { "type": "string" },
+        "createdAt": { "type": "string" }
+      },
+      "required": ["id", "userId", "category", "score"]
+    },
+    "SkillProfile": {
+      "title": "SkillProfile",
+      "description": "Aggregated skill breakdown and gap analysis for student",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "overallScore": { "type": "number" },
+        "aptitudeScore": { "type": "number" },
+        "logicalScore": { "type": "number" },
+        "codingScore": { "type": "number" },
+        "technicalScore": { "type": "number" },
+        "communicationScore": { "type": "number" },
+        "strongTopics": { "type": "array" },
+        "weakTopics": { "type": "array" },
+        "repeatedMistakes": { "type": "array" },
+        "learningPriorities": { "type": "array" },
+        "aiExplanation": { "type": "string" },
+        "updatedAt": { "type": "string" }
+      },
+      "required": ["userId"]
+    },
+    "Roadmap": {
+      "title": "Roadmap",
+      "description": "Adaptive placement preparation roadmap",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "userId": { "type": "string" },
+        "title": { "type": "string" },
+        "durationDays": { "type": "number" },
+        "targetCareer": { "type": "string" },
+        "progressPercentage": { "type": "number" },
+        "completedTasksCount": { "type": "number" },
+        "totalTasksCount": { "type": "number" },
+        "currentDay": { "type": "number" },
+        "status": { "type": "string" },
+        "createdAt": { "type": "string" },
+        "updatedAt": { "type": "string" }
+      },
+      "required": ["id", "userId", "durationDays"]
+    },
+    "RoadmapTask": {
+      "title": "RoadmapTask",
+      "description": "Individual daily task item within an active roadmap",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "roadmapId": { "type": "string" },
+        "userId": { "type": "string" },
+        "dayNumber": { "type": "number" },
+        "title": { "type": "string" },
+        "topic": { "type": "string" },
+        "category": { "type": "string" },
+        "estimatedMinutes": { "type": "number" },
+        "exercises": { "type": "array" },
+        "revisionNotes": { "type": "string" },
+        "isCompleted": { "type": "boolean" },
+        "completedAt": { "type": "string" }
+      },
+      "required": ["id", "roadmapId", "userId", "dayNumber", "title"]
+    },
+    "Interview": {
+      "title": "Interview",
+      "description": "Mock interview session record with turns and feedback",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "userId": { "type": "string" },
+        "interviewType": { "type": "string" },
+        "targetCareer": { "type": "string" },
+        "difficulty": { "type": "string" },
+        "overallScore": { "type": "number" },
+        "feedback": { "type": "object" },
+        "completedAt": { "type": "string" },
+        "createdAt": { "type": "string" }
+      },
+      "required": ["id", "userId", "interviewType"]
+    },
+    "CodingSubmission": {
+      "title": "CodingSubmission",
+      "description": "Student coding problem submission and test run output",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "userId": { "type": "string" },
+        "problemId": { "type": "string" },
+        "language": { "type": "string" },
+        "code": { "type": "string" },
+        "status": { "type": "string" },
+        "passedTests": { "type": "number" },
+        "totalTests": { "type": "number" },
+        "executionTimeMs": { "type": "number" },
+        "submittedAt": { "type": "string" }
+      },
+      "required": ["id", "userId", "problemId", "language", "code"]
+    },
+    "Achievement": {
+      "title": "Achievement",
+      "description": "Unlocked learning badge or milestone achievement",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "userId": { "type": "string" },
+        "badgeKey": { "type": "string" },
+        "title": { "type": "string" },
+        "description": { "type": "string" },
+        "icon": { "type": "string" },
+        "unlockedAt": { "type": "string" }
+      },
+      "required": ["id", "userId", "badgeKey"]
+    },
+    "ProgressReport": {
+      "title": "ProgressReport",
+      "description": "Before and after comparative performance report",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "userId": { "type": "string" },
+        "initialAssessmentId": { "type": "string" },
+        "latestAssessmentId": { "type": "string" },
+        "initialScore": { "type": "number" },
+        "latestScore": { "type": "number" },
+        "improvementPercentage": { "type": "number" },
+        "topicImprovements": { "type": "object" },
+        "strongestImprovement": { "type": "string" },
+        "generatedAt": { "type": "string" }
+      },
+      "required": ["id", "userId", "initialScore", "latestScore"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "User",
+      "description": "Student profile information"
+    },
+    "/assessments/{assessmentId}": {
+      "schema": "Assessment",
+      "description": "Completed diagnostic and category assessments"
+    },
+    "/skillProfiles/{userId}": {
+      "schema": "SkillProfile",
+      "description": "Aggregated user skill profiles and radar data"
+    },
+    "/roadmaps/{roadmapId}": {
+      "schema": "Roadmap",
+      "description": "User personalized study roadmap plan"
+    },
+    "/roadmapTasks/{taskId}": {
+      "schema": "RoadmapTask",
+      "description": "Daily roadmap action items with completion state"
+    },
+    "/interviews/{interviewId}": {
+      "schema": "Interview",
+      "description": "Completed mock interview sessions"
+    },
+    "/codingSubmissions/{submissionId}": {
+      "schema": "CodingSubmission",
+      "description": "Student code submissions and runs"
+    },
+    "/achievements/{achievementId}": {
+      "schema": "Achievement",
+      "description": "User earned gamification badges"
+    },
+    "/progressReports/{reportId}": {
+      "schema": "ProgressReport",
+      "description": "Before and after comparison reports"
+    }
+  }
+}

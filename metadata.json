@@ -1,0 +1,6 @@
+{
+  "name": "PrepPilot AI",
+  "description": "Assess. Learn. Practice. Improve. Your intelligent AI placement preparation companion with diagnostic assessments, skill-gap analysis, adaptive roadmaps, coding practice, and mock interviews.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
